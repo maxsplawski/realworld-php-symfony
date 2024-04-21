@@ -2,30 +2,49 @@
 
 namespace App\Controller;
 
+use App\Dto\ArticleDto;
 use App\Entity\Article;
+use App\Serializer\RequestSerializer;
 use App\Service\ArticleService;
-use App\Service\RequestHandler;
+use App\Validator\RequestValidator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/api/articles')]
+#[Route('/api/articles', format: 'json')]
 class ArticleController extends AbstractController
 {
     public function __construct(
-        private readonly RequestHandler $requestHandler,
+        private readonly RequestSerializer $requestSerializer,
+        private readonly RequestValidator $requestValidator,
         private readonly ArticleService $articleService,
     )
     {
     }
 
+    #[Route('/{slug}', methods: ['GET'])]
+    public function show(Article $article): JsonResponse
+    {
+        return $this->json([
+            'article' => $article,
+        ]);
+    }
+
     #[Route('', methods: ['POST'])]
     public function store(Request $request): JsonResponse
     {
-        $deserializedArticle = $this->requestHandler->handle($request, Article::class);
+        $deserializedDto = $this->requestSerializer->serialize($request, 'article', ArticleDto::class);
 
-        $article = $this->articleService->store($deserializedArticle);
+        $errors = $this->requestValidator->validate($deserializedDto);
+
+        if ($errors) {
+            return $this->json([
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $article = $this->articleService->store($deserializedDto);
 
         return $this->json([
             'article' => $article,
