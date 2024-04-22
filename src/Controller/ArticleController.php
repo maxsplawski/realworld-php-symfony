@@ -2,22 +2,19 @@
 
 namespace App\Controller;
 
-use App\Dto\ArticleDto;
+use App\Dto\StoreArticleDto;
+use App\Dto\UpdateArticleDto;
 use App\Entity\Article;
-use App\Serializer\RequestSerializer;
 use App\Service\ArticleService;
-use App\Validator\RequestValidator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/api/articles', format: 'json')]
+#[Route('/api/articles')]
 class ArticleController extends AbstractController
 {
     public function __construct(
-        private readonly RequestSerializer $requestSerializer,
-        private readonly RequestValidator $requestValidator,
         private readonly ArticleService $articleService,
     )
     {
@@ -32,22 +29,33 @@ class ArticleController extends AbstractController
     }
 
     #[Route('', methods: ['POST'])]
-    public function store(Request $request): JsonResponse
+    public function store(#[MapRequestPayload] StoreArticleDto $dto): JsonResponse
     {
-        $deserializedDto = $this->requestSerializer->serialize($request, 'article', ArticleDto::class);
-
-        $errors = $this->requestValidator->validate($deserializedDto);
-
-        if ($errors) {
-            return $this->json([
-                'errors' => $errors,
-            ], 422);
-        }
-
-        $article = $this->articleService->store($deserializedDto);
+        $article = $this->articleService->store($dto);
 
         return $this->json([
             'article' => $article,
         ], 201);
+    }
+
+    #[Route('/{slug}', methods: ['PUT'])]
+    public function update(
+        #[MapRequestPayload] UpdateArticleDto $dto,
+        Article $article,
+    ): JsonResponse
+    {
+        $updatedArticle = $this->articleService->update($article, $dto);
+
+        return $this->json([
+            'article' => $updatedArticle,
+        ]);
+    }
+
+    #[Route('/{slug}', methods: ['DELETE'])]
+    public function delete(Article $article): JsonResponse
+    {
+        $this->articleService->delete($article);
+
+        return $this->json(null, 204);
     }
 }
