@@ -8,7 +8,7 @@ use App\Entity\Article;
 use App\Service\ArticleService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\HttpKernel\Attribute\ValueResolver;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/api/articles')]
@@ -29,7 +29,10 @@ class ArticleController extends AbstractController
     }
 
     #[Route('', methods: ['POST'])]
-    public function store(#[MapRequestPayload] StoreArticleDto $dto): JsonResponse
+    public function store(
+        #[ValueResolver('nested_json')]
+        StoreArticleDto $dto
+    ): JsonResponse
     {
         $article = $this->articleService->store($dto);
 
@@ -40,8 +43,9 @@ class ArticleController extends AbstractController
 
     #[Route('/{slug}', methods: ['PUT'])]
     public function update(
-        #[MapRequestPayload] UpdateArticleDto $dto,
-        Article $article,
+        #[ValueResolver('nested_json')]
+        UpdateArticleDto $dto,
+        Article $article
     ): JsonResponse
     {
         $updatedArticle = $this->articleService->update($article, $dto);

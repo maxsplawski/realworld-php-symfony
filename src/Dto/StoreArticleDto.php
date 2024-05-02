@@ -4,8 +4,10 @@ namespace App\Dto;
 
 use Symfony\Component\Validator\Constraints as Assert;
 
-readonly class StoreArticleDto
+final readonly class StoreArticleDto implements NestedJsonDtoInterface
 {
+    private const NESTED_JSON_OBJECT_KEY = 'article';
+
     public function __construct(
         #[Assert\NotNull]
         #[Assert\Type('string')]
@@ -20,6 +22,11 @@ readonly class StoreArticleDto
         private ?string $description,
     )
     {
+    }
+
+    public static function getNestedJsonObjectKey(): string
+    {
+        return self::NESTED_JSON_OBJECT_KEY;
     }
 
     public function getTitle(): ?string
