@@ -2,8 +2,10 @@
 
 namespace App\Repository;
 
+use App\Dto\ArticlesQueryParams;
 use App\Entity\Article;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -19,6 +21,15 @@ class ArticleRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Article::class);
+    }
+
+    public function list(ArticlesQueryParams $params): Paginator
+    {
+        $query = $this->createQueryBuilder('a')
+            ->setFirstResult($params->getOffset())
+            ->setMaxResults($params->getLimit());
+
+        return new Paginator($query);
     }
 
 //    /**
