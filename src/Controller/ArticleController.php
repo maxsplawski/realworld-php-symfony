@@ -2,12 +2,15 @@
 
 namespace App\Controller;
 
+use App\Dto\ArticlesQueryParams;
 use App\Dto\StoreArticleDto;
 use App\Dto\UpdateArticleDto;
 use App\Entity\Article;
+use App\Repository\ArticleRepository;
 use App\Service\ArticleService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\HttpKernel\Attribute\ValueResolver;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -16,8 +19,23 @@ class ArticleController extends AbstractController
 {
     public function __construct(
         private readonly ArticleService $articleService,
+        private readonly ArticleRepository $articleRepository,
     )
     {
+    }
+
+    #[Route('', methods: ['GET'])]
+    public function index(
+        #[MapQueryString]
+        ArticlesQueryParams $params = new ArticlesQueryParams()
+    ): JsonResponse
+    {
+        $articles = $this->articleRepository->list($params);
+
+        return $this->json([
+            'articles' => $articles,
+            'articlesCount' => $articles->count(),
+        ]);
     }
 
     #[Route('/{slug}', methods: ['GET'])]
